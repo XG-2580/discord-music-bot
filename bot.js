@@ -23,7 +23,6 @@ client.on('ready', () => {
 // arrays for tweet data
 var Lukas_Tweets = [];
 var Connor_Tweets = [];
-var Jack_Tweets = [];
 
 // values for csv
 function MyCSV(id, time, message) {
@@ -51,15 +50,6 @@ async.series([
                 Connor_Tweets.push(new MyCSV(data[index][0], data[index][1], data[index][2]));    
             }
             callback(null, 2);
-        });
-    },
-    function(callback) {
-        var obj = csv();
-        obj.from.path('jjkunderscore_tweets.csv').to.array(function (data) {
-            for (var index = 0; index < data.length; ++index) {
-                Jack_Tweets.push(new MyCSV(data[index][0], data[index][1], data[index][2]));
-            }
-            callback(null, 3);
         });
     }
 ], function(error, results) {
@@ -122,14 +112,6 @@ client.on('message', message => {
                     Connor_Tweets[temp].FieldOne.substring(1);
                 console.log(link + ' : ' + Connor_Tweets[temp].FieldTwo + ' : ' + 
                     Connor_Tweets[temp].FieldThree.substring(1));
-                message.channel.send(link);
-                break;
-            case 'jack':
-                var temp = Math.floor((Math.random() * Jack_Tweets.length));
-                var link = 'https://twitter.com/jkkunderscore/status/' + 
-                    Jack_Tweets[temp].FieldOne.substring(1);
-                console.log(link + ' : ' + Jack_Tweets[temp].FieldTwo + ' : ' + 
-                    Jack_Tweets[temp].FieldThree.substring(1));
                 message.channel.send(link);
                 break;
             case 'fact':
@@ -381,7 +363,7 @@ client.on('message', message => {
                 break;
             // list commands
             default:
-                message.channel.send('commands: !lukas !connor !jack !coinflip !fact \n');
+                message.channel.send('commands: !lukas !connor !coinflip !fact \n');
                 message.channel.send('!add [search] !addlink [yt link here] !remove [position] \n');
                 message.channel.send('!play !skip !pause !resume !stop !print !clear !autoplay \n');
                 break;
