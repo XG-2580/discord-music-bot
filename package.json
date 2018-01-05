@@ -9,13 +9,8 @@
     "csv": "^0.3.7",
     "discord.io": "github:woor/discord.io#gateway_v6",
     "discord.js": "^11.2.1",
-    "fast-csv": "^2.4.1",
-    "ffmpeg-binaries": "^3.2.2-3",
     "get-youtube-id": "^1.0.0",
-    "opusscript": "0.0.6",
     "request": "^2.83.0",
-    "utf8": "^3.0.0",
-    "winston": "^2.4.0",
     "youtube-info": "^1.1.2",
     "ytdl-core": "^0.18.5"
   }
