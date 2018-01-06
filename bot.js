@@ -60,10 +60,10 @@ const queue_size = 10;
 var queue = [];
 var video_info = [];
 var isAuto = false;
-var isJoined = false;
 var isPlaying = false;
-var dispatcher = null;
 var isPaused = false;
+var dispatcher = null;
+
 const random_facts = fs.readFileSync('randomfacts.txt').toString().split('\n');
 
 // evaluate messages
@@ -114,6 +114,7 @@ client.on('message', message => {
                     Connor_Tweets[temp].FieldThree.substring(1));
                 message.channel.send(link);
                 break;
+            // random fact finder
             case 'fact':
                 var temp = Math.floor((Math.random() * random_facts.length));
                 console.log(random_facts[temp]);
@@ -121,41 +122,40 @@ client.on('message', message => {
                 break;
             // join current user's channel
             case 'join':
-                if (message.member.voiceChannel) {
+                if (message.member.voiceChannel && is_admin(message.member)) {
                     message.member.voiceChannel.join()
                     .then(connection => { 
                         // do things if successfully connected
                     })
                     .catch(console.log);
-                    isJoined = true;
                 } 
                 else { 
-                    message.reply('join a channel'); 
+                    message.channel.send('join a channel'); 
                 }
                 break;
             // leave current channel
             case 'leave':
-                if (isJoined) { 
-                    bot_member.voiceChannel.kick; 
+                var voiceConnection = client.voiceConnections.find(val => val.channel.guild.id == message.guild.id);
+                if (voiceConnection === null) { 
+                    return console.log('not in channel');
                 }
-                else { 
-                    message.channel.send('not in channel'); 
+                else {
+                    if (is_admin(message.member)) { 
+                        if (isPlaying) {
+                            dispatcher.end();
+                        }
+                        queue = [];
+                        video_info = [];
+                        console.log('queue cleared');
+
+                        bot_member.voiceChannel.leave(); 
+                    }
                 }
                 break;
-            // plays next song in queue / skips current song
+            // plays next song in queue
             case 'play':
-                if (queue.length > 0 && !isPlaying && !isPaused) {
-                    isPlaying = true;
-
-                    getID(queue, message, function(id) {
-                        playMusic(id, message);
-
-                        fetchVideoInfo(id, function(err, videoInfo) {
-                            if (err) throw new Error(err);
-                            message.channel.send(" now playing: **" + videoInfo.title + "**");
-                            console.log("playing: " + videoInfo.title);
-                        });
-                    });
+                if (queue.length > 0 && !isPaused && !isPlaying) {
+                    get_next(message);
                 }
                 else {
                     if (queue.length == 0) { 
@@ -168,31 +168,22 @@ client.on('message', message => {
                 break;
             case 'skip':
                 if (queue.length > 0 && isPlaying) {
+                    if (get_connection(message) === null) {
+                        return message.channel.send('no');
+                    }
+
+                    if (dispatcher.paused) { 
+                        dispatcher.resume();
+                        isPaused = false;
+                    }
                     dispatcher.end();
-
-                    if (queue.length == 0) {
-                        message.channel.send('queue is empty'); 
-                    }
-                    else {
-                        if (!isAuto) {
-                            getID(queue, message, function(id) {
-                                playMusic(id, message);
-
-                                fetchVideoInfo(id, function(err, videoInfo) {
-                                    if (err) throw new Error(err);
-                                    message.channel.send(" now playing: **" + videoInfo.title + "**");
-                                    console.log("playing: " + videoInfo.title);
-                                });
-                            });
-                        }
-                    }
                 }
                 else { 
-                    if (queue.length == 0) { 
-                        message.channel.send('queue is empty'); 
+                    if (queue.length == 0) {
+                        message.channel.send('queue is empty');
                     }
-                    else { 
-                        message.channel.send('nothing is playing'); 
+                    else {
+                        message.channel.send('nothing is playing');
                     }
                 }
                 break;
@@ -207,30 +198,23 @@ client.on('message', message => {
                     message.channel.send('autoplay on');
 
                     if (queue.length > 0 && !isPlaying && !isPaused) {
-                        isPlaying = true;
-
-                        getID(queue, message, function(id) {
-                            playMusic(id, message);
-
-                            fetchVideoInfo(id, function(err, videoInfo) {
-                                if (err) throw new Error(err);
-                                message.channel.send(" now playing: **" + videoInfo.title + "**");
-                                console.log("playing: " + videoInfo.title);
-                            });
-                        });
+                        get_next(message);
                     }
                 }
                 break;
             // adds a song to queue
             case 'add':
-                if (queue.length <= queue_size) {
+                if (queue.length < queue_size) {
                     getsearchID(args, message, function(id) {
-                        if (id == 'null') return;
-                        queue.push('https://www.youtube.com/watch?v=' + id);
-
+                        if (id == 'null') {
+                            message.channel.send('could not find');
+                        }
+                        
                         fetchVideoInfo(id, function(error, videoInfo) {
                             if (error) throw new Error(error);
                             message.channel.send("added **" +  videoInfo.title + "**");
+
+                            queue.push('https://www.youtube.com/watch?v=' + id);
                             video_info.push(videoInfo.title);
                         });
                     });
@@ -240,7 +224,7 @@ client.on('message', message => {
                 }
                 break;
             case 'addlink':
-                if (queue.length <= queue_size) {
+                if (queue.length < queue_size) {
                     getID(args, message, function(id) {
 
                         if (args[0] == null) {
@@ -256,10 +240,11 @@ client.on('message', message => {
                             return;
                         } 
                         else { 
-                            queue.push(args[0]); 
                             fetchVideoInfo(id, function(error, videoInfo) {
                                 if (error) throw new Error(error);
                                 message.channel.send("added **" +  videoInfo.title + "**");
+
+                                queue.push(args[0]); 
                                 video_info.push(videoInfo.title);
                             });
                         }
@@ -271,17 +256,23 @@ client.on('message', message => {
                 break;
             // pauses current song
             case 'pause':
-                if (isPlaying) {
+                if (get_connection(message) === null) { 
+                    return message.channel.send('no');
+                }
+
+                if (!dispatcher.paused) { 
                     dispatcher.pause();
                     isPaused = true;
-                    isPlaying = false;
                 }
                 break;
             // resumes current song
             case 'resume':
-                if (isPaused) {
+                if (get_connection(message) === null) { 
+                    return message.channel.send('no');
+                }
+
+                if (dispatcher.paused) { 
                     dispatcher.resume();
-                    isPlaying = true;
                     isPaused = false;
                 }
                 break;
@@ -289,13 +280,13 @@ client.on('message', message => {
             case 'stop':
                 if (isPlaying) { 
                     dispatcher.end(); 
-                    isPlaying = false;
                 }
                 break;
             case 'clear':
                 queue = [];
                 video_info = [];
                 message.channel.send('queue cleared');
+                console.log('queue cleared');
                 break;
             case 'remove':
                 if (args[0] == null) {
@@ -324,14 +315,10 @@ client.on('message', message => {
                     message.channel.send('queue is empty'); 
                 }
                 else {
-                    if (isAuto) {
-                        message.channel.send('CURRENT SIZE: ' + queue.length + 
-                            ' CAPACITY: ' + queue_size + ' AUTOPLAY: ON\n');
-                    }
-                    else {
-                        message.channel.send('CURRENT SIZE: ' + queue.length + 
-                            ' CAPACITY: ' + queue_size + ' AUTOPLAY: OFF\n');
-                    }
+                    var on_off = isAuto ? 'ON' : 'OFF';
+
+                    message.channel.send('CURRENT SIZE: ' + queue.length + 
+                        ' CAPACITY: ' + queue_size + ' AUTOPLAY: ' + on_off + '\n');
                     
                     for (var i = 0; i < queue.length; ++i) {
                         if (i == 0 && isPlaying) {
@@ -348,18 +335,14 @@ client.on('message', message => {
             // heads or tails coinflip
             case 'coinflip':
                 message.channel.send('beginning coinflip...\n');
-                setTimeout(function() { message.channel.send('...\n'); }, 3000);
-                setTimeout(function() { message.channel.send('..\n'); }, 3000);
-                setTimeout(function() { message.channel.send('.\n'); }, 3000);
+                setTimeout(function() { message.channel.send('...\n'); }, 2000);
+                setTimeout(function() { message.channel.send('..\n'); }, 2000);
+                setTimeout(function() { message.channel.send('.\n'); }, 2000);
                 setTimeout(function() {
                     var temp = Math.floor((Math.random() * 2));
-                    if (temp == 0) { 
-                        message.channel.send('HEADS\n'); 
-                    }
-                    else {  
-                        message.channel.send('TAILS\n'); 
-                    }
-                }, 3000);
+                    if (temp == 0) {  message.channel.send('HEADS\n'); }
+                    else { message.channel.send('TAILS\n'); }
+                }, 2000);
                 break;
             // list commands
             default:
@@ -398,13 +381,15 @@ function getID(str, message, callback) {
 }
 
 function playMusic(id, message) {
-    voiceChannel = message.member.voiceChannel;
+    var voiceChannel = message.member.voiceChannel;
+
+    if (queue.length == 0) {
+        return message.channel.send('queue is empty');
+    }
+
     voiceChannel.join().then(function (connection) {
 
-        isJoined = true;
-        isPlaying = true;
-
-        stream = ytdl('https://www.youtube.com/watch?v=' + id, {
+        var stream = ytdl('https://www.youtube.com/watch?v=' + id, {
             filter: 'audioonly'
         });
 
@@ -413,38 +398,45 @@ function playMusic(id, message) {
         // adjust volume
         dispatcher.setVolume(0.25);
 
-        dispatcher.on('error', e => {
-          console.log(e);
+        connection.on('error', (error) => {
+            console.log(error);
+            queue.shift();
+            video_info.shift();
+            get_next(message);
+        });
+
+        dispatcher.on('error', (error) => {
+            console.log(error);
+            queue.shift();
+            video_info.shift();
+            get_next(message);
+        });
+
+        dispatcher.on('start', () => {
+            isPlaying = true;
         });
 
         // when finished check for autoplay
         dispatcher.on('end', () => {
-            
-            if (queue.length > 0) {
-                queue.reverse();
-                queue.pop();
-                queue.reverse();
+            isPlaying = false;
+            isPaused = false;
 
-                video_info.reverse();
-                video_info.pop();
-                video_info.reverse();
+            setTimeout(() => {
+                if (queue.length > 0) {
+                    queue.shift();
+                    video_info.shift();
 
-                isPlaying = false;
-
-                if (isAuto && queue.length > 0) {
-                    getID(queue, message, function(new_id) {
-                        playMusic(new_id, message);
-
-                        fetchVideoInfo(new_id, function(err, videoInfo) {
-                            if (err) console.log(err);
-                            message.channel.send(" now playing: **" + 
-                                videoInfo.title + "**");
-                            console.log("playing: " + videoInfo.title);
-                        });
-                    });
+                    if (isAuto && queue.length > 0) {
+                        get_next(message);
+                    }
                 }
-            }
+                else {
+                    message.channel.send('queue is empty');
+                }
+            }, 1000);
         });
+    }).catch((error) => {
+        console.log(error);
     });
 }
 
@@ -462,4 +454,23 @@ function search_video(query, callback) {
     });
 }
 
+function get_next(message) {
+    getID(queue, message, function(new_id) {
+        playMusic(new_id, message);
 
+        fetchVideoInfo(new_id, function(err, videoInfo) {
+            if (err) console.log(err);
+            message.channel.send(" now playing: **" + 
+                videoInfo.title + "**");
+            console.log("playing: " + videoInfo.title);
+        });
+    });
+}
+
+function is_admin(member) {
+    return member.hasPermission("ADMINISTRATOR");
+}
+
+function get_connection(message) {
+    return client.voiceConnections.find(val => val.channel.guild.id == message.guild.id);
+}
