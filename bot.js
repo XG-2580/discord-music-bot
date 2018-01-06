@@ -135,8 +135,7 @@ client.on('message', message => {
                 break;
             // leave current channel
             case 'leave':
-                var voiceConnection = client.voiceConnections.find(val => val.channel.guild.id == message.guild.id);
-                if (voiceConnection === null) { 
+                if (get_connection(message) === null) { 
                     return console.log('not in channel');
                 }
                 else {
