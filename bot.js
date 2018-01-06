@@ -279,6 +279,10 @@ client.on('message', message => {
             // stops song
             case 'stop':
                 if (isPlaying) { 
+                    if (dispatcher.paused) { 
+                        dispatcher.resume();
+                        isPaused = false;
+                    }
                     dispatcher.end(); 
                 }
                 break;
