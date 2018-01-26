@@ -286,10 +286,15 @@ client.on('message', message => {
                 }
                 break;
             case 'clear':
-                queue = [];
-                video_info = [];
-                message.channel.send('queue cleared');
-                console.log('queue cleared');
+                if (is_admin(message.member)) {
+                    queue = [];
+                    video_info = [];
+                    message.channel.send('queue cleared');
+                    console.log('queue cleared');
+                }
+                else {
+                    console.log('not admin')
+                }
                 break;
             case 'remove':
                 if (args[0] == null) {
