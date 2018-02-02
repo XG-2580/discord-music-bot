@@ -31,7 +31,6 @@ var dispatcher = null;
 // bot login
 client.login(config.token);
 
-// bot is ready
 client.on('ready', () => {
   console.log(client.user + ' connected');
 });
@@ -45,7 +44,6 @@ function MyCSV(id, time, message) {
 
 // read in csv files synchronously
 async.series([
-    
     function(callback) {
         var obj = csv();
         obj.from.path('LukasPrin_tweets.csv').to.array(function (data) {
@@ -65,7 +63,7 @@ async.series([
         });
     }
 ], function(error, results) {
-    if (error) console.log(error);
+    if (error) console.log(error, results);
 });
 
 // evaluate messages
@@ -209,12 +207,12 @@ client.on('message', message => {
             case 'add':
                 if (queue.length < queue_size) {
                     getsearchID(args, message, function(id) {
-                        if (id === 'null') {
+                        if (id === null) {
                             message.channel.send('could not find');
                         }
                         
                         fetchVideoInfo(id, function(error, videoInfo) {
-                            if (error) throw new Error(error);
+                            if (error) console.log(error);
                             message.channel.send("added **" +  videoInfo.title + "**");
 
                             queue.push('https://www.youtube.com/watch?v=' + id);
@@ -240,9 +238,9 @@ client.on('message', message => {
                             return;
                         } else { 
                             fetchVideoInfo(id, function(error, videoInfo) {
-                                if (error) throw new Error(error);
+                                if (error) console.log(error)
+                                    ;
                                 message.channel.send("added **" +  videoInfo.title + "**");
-
                                 queue.push(args[0]); 
                                 video_info.push(videoInfo.title);
                             });
@@ -352,9 +350,10 @@ client.on('message', message => {
                 break;
             // list commands
             default:
-                message.channel.send('commands: !lukas !connor !coinflip !fact \n' + 
+                message.channel.send('commands: ' +
+                    '!lukas !connor !coinflip !fact \n' + 
                     '!add [search] !addlink [yt link here] !remove [position] \n' +
-                    '!play !skip !pause !resume !stop !print !clear !autoplay \n');
+                    '!play !skip !pause !resume !stop !print !autoplay \n');
                 break;
         }
     }
@@ -362,7 +361,7 @@ client.on('message', message => {
 
 function getsearchID(str, message, callback) {
     search_video(str, function(id) {
-        if (id === 'null') { 
+        if (id === null) { 
             message.channel.send('no results found'); 
         }
         callback(id);
@@ -450,7 +449,7 @@ function search_video(query, callback) {
         encodeURIComponent(query) + "&key=" + config.yt_api_key, function(error, response, body) {
         var search_results = JSON.parse(body);
         if (!search_results.items[0]) { 
-            callback('null'); 
+            callback(null); 
         } else { 
             callback(search_results.items[0].id.videoId); 
         }
@@ -461,8 +460,8 @@ function get_next(message) {
     getID(queue, message, function(new_id) {
         playMusic(new_id, message);
 
-        fetchVideoInfo(new_id, function(err, videoInfo) {
-            if (err) console.log(err);
+        fetchVideoInfo(new_id, function(error, videoInfo) {
+            if (error) console.log(error);
             message.channel.send(" now playing: **" + 
                 videoInfo.title + "**");
             console.log("playing: " + videoInfo.title);
