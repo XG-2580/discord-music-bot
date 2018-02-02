@@ -238,8 +238,8 @@ client.on('message', message => {
                             return;
                         } else { 
                             fetchVideoInfo(id, function(error, videoInfo) {
-                                if (error) console.log(error)
-                                    ;
+                                if (error) console.log(error);
+
                                 message.channel.send("added **" +  videoInfo.title + "**");
                                 queue.push(args[0]); 
                                 video_info.push(videoInfo.title);
@@ -336,9 +336,9 @@ client.on('message', message => {
             // heads or tails coinflip
             case 'coinflip':
                 message.channel.send('beginning coinflip...\n');
-                setTimeout(function() { message.channel.send('...\n'); }, 2000);
-                setTimeout(function() { message.channel.send('..\n'); }, 2000);
-                setTimeout(function() { message.channel.send('.\n'); }, 2000);
+                setTimeout(function() { message.channel.send('...\n'); }, 1000);
+                setTimeout(function() { message.channel.send('..\n'); }, 1000);
+                setTimeout(function() { message.channel.send('.\n'); }, 1000);
                 setTimeout(function() {
                     var temp = Math.floor((Math.random() * 2));
                     if (temp === 0) {  
@@ -350,13 +350,17 @@ client.on('message', message => {
                 break;
             // list commands
             default:
-                message.channel.send('commands: ' +
+                message.channel.send('commands: \n' +
                     '!lukas !connor !coinflip !fact \n' + 
                     '!add [search] !addlink [yt link here] !remove [position] \n' +
                     '!play !skip !pause !resume !stop !print !autoplay \n');
                 break;
         }
     }
+});
+
+client.on("disconnect", event => {
+    console.log("disconnection: " + event.reason + " (" + event.code + ")");
 });
 
 function getsearchID(str, message, callback) {
@@ -402,6 +406,7 @@ function playMusic(id, message) {
         // adjust volume
         dispatcher.setVolume(0.25);
 
+        // change video if error
         connection.on('error', (error) => {
             console.log(error);
             queue.shift();
