@@ -12,6 +12,22 @@ const client = new Discord.Client();
 // requires discord 'token'
 const config = JSON.parse(fs.readFileSync('./auth.json', 'utf-8'));
 
+// get array of random facts
+const random_facts = fs.readFileSync('randomfacts.txt').toString().split('\n');
+
+// arrays for tweet data
+var Lukas_Tweets = [];
+var Connor_Tweets = [];
+
+// music values
+const queue_size = 10;
+var queue = [];
+var video_info = [];
+var isAuto = false;
+var isPlaying = false;
+var isPaused = false;
+var dispatcher = null;
+
 // bot login
 client.login(config.token);
 
@@ -19,10 +35,6 @@ client.login(config.token);
 client.on('ready', () => {
   console.log(client.user + ' connected');
 });
-
-// arrays for tweet data
-var Lukas_Tweets = [];
-var Connor_Tweets = [];
 
 // values for csv
 function MyCSV(id, time, message) {
@@ -56,16 +68,6 @@ async.series([
     if (error) console.log(error);
 });
 
-const queue_size = 10;
-var queue = [];
-var video_info = [];
-var isAuto = false;
-var isPlaying = false;
-var isPaused = false;
-var dispatcher = null;
-
-const random_facts = fs.readFileSync('randomfacts.txt').toString().split('\n');
-
 // evaluate messages
 client.on('message', message => {
 
@@ -77,19 +79,25 @@ client.on('message', message => {
 
     // basic responses
     const ramus = 'ramus';
-    if (message.content.toLowerCase() == 'hey ramus' || 
-        message.content.toLowerCase() == 'hi ramus') {
+    var i, j;
+
+    if (message.content.toLowerCase() === 'hey ramus' || 
+        message.content.toLowerCase() === 'hi ramus') {
         message.channel.send('hey ' + message.author);
-        return;
     }
-    for (var i = 0, j = 0; i < message.content.length; ++i) {
-        if (j == ramus.length - 1) { message.channel.send('ok'); }
-        if (message.content[i].toLowerCase() == ramus[j]) { j++; }
-        else { j = 0; }
+    for (i = 0, j = 0; i < message.content.length; ++i) {
+        if (j === ramus.length - 1) { 
+            message.channel.send('ok'); 
+        }
+        if (message.content[i].toLowerCase() === ramus[j]) { 
+            j++; 
+        } else { 
+            j = 0; 
+        }
     }
 
     // accept messages with !
-    if (message.content.substring(0, 1) == '!') {
+    if (message.content.substring(0, 1) === '!') {
 
         // parse command and switch
         var args = message.content.substring(1).split(' ');
@@ -128,8 +136,7 @@ client.on('message', message => {
                         // do things if successfully connected
                     })
                     .catch(console.log);
-                } 
-                else { 
+                } else { 
                     message.channel.send('join a channel'); 
                 }
                 break;
@@ -157,10 +164,9 @@ client.on('message', message => {
                     get_next(message);
                 }
                 else {
-                    if (queue.length == 0) { 
+                    if (queue.length === 0) { 
                         message.channel.send('queue is empty'); 
-                    }
-                    else { 
+                    } else { 
                         message.channel.send('already playing'); 
                     }
                 }
@@ -178,10 +184,9 @@ client.on('message', message => {
                     dispatcher.end();
                 }
                 else { 
-                    if (queue.length == 0) {
+                    if (queue.length === 0) {
                         message.channel.send('queue is empty');
-                    }
-                    else {
+                    } else {
                         message.channel.send('nothing is playing');
                     }
                 }
@@ -191,8 +196,7 @@ client.on('message', message => {
                 if (isAuto) { 
                     isAuto = false;
                     message.channel.send('autoplay off');
-                }
-                else { 
+                } else { 
                     isAuto = true;
                     message.channel.send('autoplay on');
 
@@ -205,7 +209,7 @@ client.on('message', message => {
             case 'add':
                 if (queue.length < queue_size) {
                     getsearchID(args, message, function(id) {
-                        if (id == 'null') {
+                        if (id === 'null') {
                             message.channel.send('could not find');
                         }
                         
@@ -217,8 +221,7 @@ client.on('message', message => {
                             video_info.push(videoInfo.title);
                         });
                     });
-                }
-                else { 
+                } else { 
                     message.channel.send('queue is full'); 
                 }
                 break;
@@ -226,19 +229,16 @@ client.on('message', message => {
                 if (queue.length < queue_size) {
                     getID(args, message, function(id) {
 
-                        if (args[0] == null) {
+                        if (args[0] === null) {
                             message.channel.send('empty link');
                             return;
-                        }
-                        else if (args[0].length < 33) {
+                        } else if (args[0].length < 33) {
                             message.channel.send('use full youtube link');
                             return;
-                        }
-                        else if (args[0].substring(0, 32) != 'https://www.youtube.com/watch?v=') {
+                        } else if (args[0].substring(0, 32) != 'https://www.youtube.com/watch?v=') {
                             message.channel.send('use link with https://www. [no mobile]');
                             return;
-                        } 
-                        else { 
+                        } else { 
                             fetchVideoInfo(id, function(error, videoInfo) {
                                 if (error) throw new Error(error);
                                 message.channel.send("added **" +  videoInfo.title + "**");
@@ -248,8 +248,7 @@ client.on('message', message => {
                             });
                         }
                     });
-                }
-                else { 
+                } else { 
                     message.channel.send('queue is full'); 
                 }
                 break;
@@ -291,13 +290,12 @@ client.on('message', message => {
                     video_info = [];
                     message.channel.send('queue cleared');
                     console.log('queue cleared');
-                }
-                else {
+                } else {
                     console.log('not admin')
                 }
                 break;
             case 'remove':
-                if (args[0] == null) {
+                if (args[0] === null) {
                     message.channel.send('enter a number between 1 - ' + queue.length);
                 }
                 else {
@@ -308,32 +306,29 @@ client.on('message', message => {
 
                             queue.splice(temp - 1, 1);
                             video_info.splice(temp - 1, 1); 
-                        }
-                        else {
+                        } else {
                            message.channel.send('enter a number between 1 - ' + queue.length); 
                         }
-                    }
-                    else {
+                    } else {
                         message.channel.send('enter a number between 1 - ' + queue.length);
                     }
                 }
                 break;
             case 'print':
-                if (queue.length == 0) { 
+                if (queue.length === 0) { 
                     message.channel.send('queue is empty'); 
-                }
-                else {
+                } else {
                     var on_off = isAuto ? 'ON' : 'OFF';
+                    var i;
 
                     message.channel.send('CURRENT SIZE: ' + queue.length + 
                         ' CAPACITY: ' + queue_size + ' AUTOPLAY: ' + on_off + '\n');
                     
-                    for (var i = 0; i < queue.length; ++i) {
-                        if (i == 0 && isPlaying) {
+                    for (i = 0; i < queue.length; ++i) {
+                        if (i === 0 && isPlaying) {
                             message.channel.send('(' + (i + 1) + ') ' + '**' +  
                                 video_info[i] + '** <- CURRENTLY PLAYING');
-                        }
-                        else {
+                        } else {
                             message.channel.send('(' + (i + 1) + ') ' + '**' +  
                                 video_info[i] + '**');
                         }
@@ -348,15 +343,18 @@ client.on('message', message => {
                 setTimeout(function() { message.channel.send('.\n'); }, 2000);
                 setTimeout(function() {
                     var temp = Math.floor((Math.random() * 2));
-                    if (temp == 0) {  message.channel.send('HEADS\n'); }
-                    else { message.channel.send('TAILS\n'); }
+                    if (temp === 0) {  
+                        message.channel.send('HEADS\n'); 
+                    } else { 
+                        message.channel.send('TAILS\n'); 
+                    }
                 }, 2000);
                 break;
             // list commands
             default:
-                message.channel.send('commands: !lukas !connor !coinflip !fact \n');
-                message.channel.send('!add [search] !addlink [yt link here] !remove [position] \n');
-                message.channel.send('!play !skip !pause !resume !stop !print !clear !autoplay \n');
+                message.channel.send('commands: !lukas !connor !coinflip !fact \n' + 
+                    '!add [search] !addlink [yt link here] !remove [position] \n' +
+                    '!play !skip !pause !resume !stop !print !clear !autoplay \n');
                 break;
         }
     }
@@ -364,26 +362,25 @@ client.on('message', message => {
 
 function getsearchID(str, message, callback) {
     search_video(str, function(id) {
-        if (id == 'null') { message.channel.send('no results found'); }
+        if (id === 'null') { 
+            message.channel.send('no results found'); 
+        }
         callback(id);
     });
 }
 
 function getID(str, message, callback) {
 
-    if (str[0] == null) {
+    if (str[0] === null) {
         message.channel.send('empty link');
         return;
-    }
-    else if (str[0].length < 33) {
+    } else if (str[0].length < 33) {
         message.channel.send('use full youtube link');
         return;
-    }
-    else if (str[0].substring(0, 32) != 'https://www.youtube.com/watch?v=') {
+    } else if (str[0].substring(0, 32) != 'https://www.youtube.com/watch?v=') {
         message.channel.send('use full yt link with |https://www.| [no mobile]');
         return;
-    }
-    else { 
+    } else { 
         callback(getYouTubeID(str)); 
     }
 }
@@ -391,7 +388,7 @@ function getID(str, message, callback) {
 function playMusic(id, message) {
     var voiceChannel = message.member.voiceChannel;
 
-    if (queue.length == 0) {
+    if (queue.length === 0) {
         return message.channel.send('queue is empty');
     }
 
@@ -437,8 +434,7 @@ function playMusic(id, message) {
                     if (isAuto && queue.length > 0) {
                         get_next(message);
                     }
-                }
-                else {
+                } else {
                     message.channel.send('queue is empty');
                 }
             }, 1000);
@@ -455,8 +451,7 @@ function search_video(query, callback) {
         var search_results = JSON.parse(body);
         if (!search_results.items[0]) { 
             callback('null'); 
-        }
-        else { 
+        } else { 
             callback(search_results.items[0].id.videoId); 
         }
     });
