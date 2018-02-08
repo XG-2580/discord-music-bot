@@ -424,10 +424,6 @@ function playMusic(id, message) {
             get_next(message);
         });
 
-        dispatcher.on('start', () => {
-            isPlaying = true;
-            console.log("working");
-        });
 
         // when finished check for autoplay
         dispatcher.on('end', () => {
