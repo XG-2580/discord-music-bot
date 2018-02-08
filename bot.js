@@ -27,7 +27,7 @@ var isAuto = false;
 var isPlaying = false;
 var isPaused = false;
 var dispatcher = null;
-
+    
 // bot login
 client.login(config.token);
 
@@ -401,6 +401,9 @@ function playMusic(id, message) {
             filter: 'audioonly'
         });
 
+        stream.on('error', (Error) => {
+          console.log(Error);
+        });
         dispatcher = connection.playStream(stream);
 
         // adjust volume
@@ -423,6 +426,7 @@ function playMusic(id, message) {
 
         dispatcher.on('start', () => {
             isPlaying = true;
+            console.log("working");
         });
 
         // when finished check for autoplay
