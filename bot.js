@@ -16,17 +16,17 @@ const config = JSON.parse(fs.readFileSync('./auth.json', 'utf-8'));
 const random_facts = fs.readFileSync('randomfacts.txt').toString().split('\n');
 
 // arrays for tweet data
-var Lukas_Tweets = [];
-var Connor_Tweets = [];
+let Lukas_Tweets = [];
+let Connor_Tweets = [];
 
 // music values
 const queue_size = 10;
-var queue = [];
-var video_info = [];
-var isAuto = false;
-var isPlaying = false;
-var isPaused = false;
-var dispatcher = null;
+let queue = [];
+let video_info = [];
+let isAuto = false;
+let isPlaying = false;
+let isPaused = false;
+let dispatcher = null;
     
 // bot login
 client.login(config.token);
@@ -45,18 +45,18 @@ function MyCSV(id, time, message) {
 // read in csv files synchronously
 async.series([
     function(callback) {
-        var obj = csv();
+        let obj = csv();
         obj.from.path('LukasPrin_tweets.csv').to.array(function (data) {
-            for (var index = 0; index < data.length; ++index) {
+            for (let index = 0; index < data.length; ++index) {
                 Lukas_Tweets.push(new MyCSV(data[index][0], data[index][1], data[index][2]));
             }
             callback(null, 1);
         });
     },
     function(callback) {
-        var obj = csv();
+        let obj = csv();
         obj.from.path('LiLCBaller23_tweets.csv').to.array(function (data) {
-            for (var index = 0; index < data.length; ++index) {
+            for (let index = 0; index < data.length; ++index) {
                 Connor_Tweets.push(new MyCSV(data[index][0], data[index][1], data[index][2]));    
             }
             callback(null, 2);
@@ -69,15 +69,17 @@ async.series([
 // evaluate messages
 client.on('message', message => {
 
-    // get bot
-    const bot_member = (message.guild).members.get(client.user.id);
+    if (!message.member) return;
 
     // deny messages from other bots
     if (message.author.bot) return;
 
+    // get bot
+    const bot_member = (message.guild).members.get(client.user.id);
+
     // basic responses
     const ramus = 'ramus';
-    var i, j;
+    let i, j;
 
     if (message.content.toLowerCase() === 'hey ramus' || 
         message.content.toLowerCase() === 'hi ramus') {
@@ -98,23 +100,25 @@ client.on('message', message => {
     if (message.content.substring(0, 1) === '!') {
 
         // parse command and switch
-        var args = message.content.substring(1).split(' ');
-        var cmd = args[0];
+        let args = message.content.substring(1).split(' ');
+        let cmd = args[0];
         args = args.splice(1);
+        let temp = 0;
+        let link = "";
 
         switch(cmd.toLowerCase()) {
             // random tweet finder
             case 'lukas':
-                var temp = Math.floor((Math.random() * Lukas_Tweets.length));
-                var link = 'https://twitter.com/LukasPrin/status/' + 
+                temp = Math.floor((Math.random() * Lukas_Tweets.length));
+                link = 'https://twitter.com/LukasPrin/status/' + 
                     Lukas_Tweets[temp].FieldOne.substring(1);
                 console.log(link + ' : ' + Lukas_Tweets[temp].FieldTwo + ' : ' + 
                     Lukas_Tweets[temp].FieldThree.substring(1));
                 message.channel.send(link);
                 break;
             case 'connor':
-                var temp = Math.floor((Math.random() * Connor_Tweets.length));
-                var link = 'https://twitter.com/LiLCBaller23/status/' + 
+                temp = Math.floor((Math.random() * Connor_Tweets.length));
+                link = 'https://twitter.com/LiLCBaller23/status/' + 
                     Connor_Tweets[temp].FieldOne.substring(1);
                 console.log(link + ' : ' + Connor_Tweets[temp].FieldTwo + ' : ' + 
                     Connor_Tweets[temp].FieldThree.substring(1));
@@ -122,7 +126,7 @@ client.on('message', message => {
                 break;
             // random fact finder
             case 'fact':
-                var temp = Math.floor((Math.random() * random_facts.length));
+                temp = Math.floor((Math.random() * random_facts.length));
                 console.log(random_facts[temp]);
                 message.channel.send(random_facts[temp]);
                 break;
@@ -298,7 +302,7 @@ client.on('message', message => {
                 }
                 else {
                     if (!isNaN(args[0])) {
-                        var temp = Number(args[0])
+                        temp  = Number(args[0])
                         if (temp <= queue.length && temp >= 1) {
                             message.channel.send('removed ' + video_info[temp - 1] + ' from queue');
 
@@ -316,13 +320,12 @@ client.on('message', message => {
                 if (queue.length === 0) { 
                     message.channel.send('queue is empty'); 
                 } else {
-                    var on_off = isAuto ? 'ON' : 'OFF';
-                    var i;
+                    let on_off = isAuto ? 'ON' : 'OFF';
 
                     message.channel.send('CURRENT SIZE: ' + queue.length + 
                         ' CAPACITY: ' + queue_size + ' AUTOPLAY: ' + on_off + '\n');
                     
-                    for (i = 0; i < queue.length; ++i) {
+                    for (let i = 0; i < queue.length; ++i) {
                         if (i === 0 && isPlaying) {
                             message.channel.send('(' + (i + 1) + ') ' + '**' +  
                                 video_info[i] + '** <- CURRENTLY PLAYING');
@@ -340,7 +343,7 @@ client.on('message', message => {
                 setTimeout(function() { message.channel.send('..\n'); }, 1000);
                 setTimeout(function() { message.channel.send('.\n'); }, 1000);
                 setTimeout(function() {
-                    var temp = Math.floor((Math.random() * 2));
+                    temp = Math.floor((Math.random() * 2));
                     if (temp === 0) {  
                         message.channel.send('HEADS\n'); 
                     } else { 
@@ -389,7 +392,7 @@ function getID(str, message, callback) {
 }
 
 function playMusic(id, message) {
-    var voiceChannel = message.member.voiceChannel;
+    let voiceChannel = message.member.voiceChannel;
 
     if (queue.length === 0) {
         return message.channel.send('queue is empty');
@@ -397,7 +400,7 @@ function playMusic(id, message) {
 
     voiceChannel.join().then(function (connection) {
 
-        var stream = ytdl('https://www.youtube.com/watch?v=' + id, {
+        let stream = ytdl('https://www.youtube.com/watch?v=' + id, {
             filter: 'audioonly'
         });
 
@@ -452,7 +455,7 @@ function playMusic(id, message) {
 function search_video(query, callback) {
     request("https://www.googleapis.com/youtube/v3/search?part=id&type=video&q=" + 
         encodeURIComponent(query) + "&key=" + config.yt_api_key, function(error, response, body) {
-        var search_results = JSON.parse(body);
+        let search_results = JSON.parse(body);
         if (!search_results.items[0]) { 
             callback(null); 
         } else { 
