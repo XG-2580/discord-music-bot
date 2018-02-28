@@ -238,12 +238,14 @@ client.on("message", (message) => {
                 if (!dispatcher.paused) { 
                     dispatcher.pause();
                     isPaused = true;
+                    isPlaying = false;
                 }
                 break;
             case "resume": // resumes current song
                 if (dispatcher.paused) { 
                     dispatcher.resume();
                     isPaused = false;
+                    isPlaying = true;
                 }
                 break;
             case "stop": // stops song
@@ -400,6 +402,8 @@ function playMusic(id, message) {
 
         // adjust volume
         dispatcher.setVolume(0.25);
+
+        isPlaying = true;
 
         // when finished check for autoplay
         dispatcher.on('end', () => {
