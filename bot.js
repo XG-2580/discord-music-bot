@@ -326,6 +326,11 @@ client.on("disconnect", (event) => {
     console.log("disconnection: " + event.reason + " (" + event.code + ")");
 });
 
+
+client.on("error", (error) => {
+    console.log("error: " + error);
+});
+
 //
 //
 // FUNCTIONS
