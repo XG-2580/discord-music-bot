@@ -47,6 +47,7 @@ async.series([
             }
             callback(null, 1);
         });
+        
     },
     (callback) => {
         let obj = csv();
@@ -110,20 +111,20 @@ client.on("message", (message) => {
             case "lukas": // random tweet finder
                 temp = Math.floor((Math.random() * Lukas_Tweets.length));
                 link = "https://twitter.com/LukasPrin/status/" + 
-                    Lukas_Tweets[temp].FieldOne.substring(1);
+                    Lukas_Tweets[temp].fieldOne.substring(1);
                 message.channel.send(link);
 
-                console.log(link + ' : ' + Lukas_Tweets[temp].FieldTwo + " : " + 
-                    Lukas_Tweets[temp].FieldThree.substring(1));
+                console.log(link + ' : ' + Lukas_Tweets[temp].fieldTwo + " : " + 
+                    Lukas_Tweets[temp].fieldThree.substring(1));
                 break;
             case "connor":
                 temp = Math.floor((Math.random() * Connor_Tweets.length));
                 link = "https://twitter.com/LiLCBaller23/status/" + 
-                    Connor_Tweets[temp].FieldOne.substring(1);
+                    Connor_Tweets[temp].fieldOne.substring(1);
                 message.channel.send(link);
 
-                console.log(link + " : " + Connor_Tweets[temp].FieldTwo + " : " + 
-                    Connor_Tweets[temp].FieldThree.substring(1));
+                console.log(link + " : " + Connor_Tweets[temp].fieldTwo + " : " + 
+                    Connor_Tweets[temp].fieldThree.substring(1));
                 break;
             case "fact": // random fact finder
                 temp = Math.floor((Math.random() * random_facts.length));
