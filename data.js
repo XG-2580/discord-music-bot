@@ -1,5 +1,3 @@
-"use strict";
-
 const csv = require("csv");
 const fs = require("fs");
 
@@ -52,23 +50,16 @@ var data = new function() {
 	this.getRandom = function(name) {
 		if (name === "lukas") {
 			let temp = Math.floor((Math.random() * this.Lukas_Tweets.length));
-	        let link = "https://twitter.com/LukasPrin/status/" + 
-	            this.Lukas_Tweets[temp].fieldOne.substring(1);
-	        console.log(link + ' : ' + this.Lukas_Tweets[temp].fieldTwo + " : " + 
-	            this.Lukas_Tweets[temp].fieldThree.substring(1));
+	        let link = "https://twitter.com/LukasPrin/status/" + this.Lukas_Tweets[temp].fieldOne.substring(1);
 	        return link;
 	    }
 	    else if (name === "connor") {
 	    	let temp = Math.floor((Math.random() * this.Connor_Tweets.length));
-            let link = "https://twitter.com/LiLCBaller23/status/" + 
-                this.Connor_Tweets[temp].fieldOne.substring(1);
-            console.log(link + " : " + this.Connor_Tweets[temp].fieldTwo + " : " + 
-                this.Connor_Tweets[temp].fieldThree.substring(1));
+            let link = "https://twitter.com/LiLCBaller23/status/" + this.Connor_Tweets[temp].fieldOne.substring(1);
             return link;
 	    }
 	    else if (name === "fact") {
 	    	let temp = Math.floor((Math.random() * this.random_facts.length));
-            console.log(this.random_facts[temp]);
             return this.random_facts[temp];
 	    }
 	};
