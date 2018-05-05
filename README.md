@@ -2,6 +2,19 @@
 
 Discord bot that can play music, downloaded from youtube, through a queue for everyone on the server. 
 
+### Requirements
+
+npm, node.js, Discord bot account, access to the Youtube API through Google
+
+Requires an auth.json file:
+
+```
+{
+  "token": "discord api token here",
+  "yt_api_key": "youtube api token here"
+}
+```
+
 I made the bot a little specific to the Discord server I use, so if you need any assistance setting it up or configuring it for your server contact me.
 
 Also, there are probably some bugs and implementation details that I could have done better. If you find any, feel free to contact me for this as well.
@@ -61,19 +74,6 @@ Same as above but for a collection of random facts I found online.
 Returns heads or tails.
 ```
 !coinflip
-```
-
-### Requirements
-
-npm, node.js, Discord bot account, access to the Youtube API through Google
-
-Requires an auth.json file:
-
-```
-{
-  "token": "discord api token here",
-  "yt_api_key": "youtube api token here"
-}
 ```
 
 ## License
