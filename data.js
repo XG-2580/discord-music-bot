@@ -16,7 +16,7 @@ var data = new function() {
 	    wait(0)
 	    .then(() => {
 	        let obj = csv();
-	        obj.from.path("./data/LukasPrin_tweets.csv").to.array(data => {
+	        obj.from.path("./static/tweets/LukasPrin_tweets.csv").to.array(data => {
 	            for (let index = 0; index < data.length; ++index) {
 	                this.Lukas_Tweets.push(new this.myCSV(data[index][0], data[index][1], data[index][2]));
 	            }
@@ -25,7 +25,7 @@ var data = new function() {
 	    })
 	    .then(() => {
 	        let obj = csv();
-	        obj.from.path("./data/LiLCBaller23_tweets.csv").to.array(data => {
+	        obj.from.path("./static/tweets/LiLCBaller23_tweets.csv").to.array(data => {
 	            for (let index = 0; index < data.length; ++index) {
 	                this.Connor_Tweets.push(new this.myCSV(data[index][0], data[index][1], data[index][2]));    
 	            }
@@ -33,7 +33,7 @@ var data = new function() {
 	        return wait(0);
 	    })
 	    .then(() => {
-	        this.random_facts = fs.readFileSync("./data/randomfacts.txt").toString().split('\n');
+	        this.random_facts = fs.readFileSync("./static/etc/randomfacts.txt").toString().split('\n');
 	        return wait(0);
 	    })
 	    .catch((error) => {
