@@ -4,7 +4,7 @@ const ytdl = require("ytdl-core");
 
 var music = new function() {
 	this.queue = [];
-	this.video_info = [];
+    this.video_info = [];
     this.isPlaying = false;
     this.isPaused = false;
     this.isAuto = false;
