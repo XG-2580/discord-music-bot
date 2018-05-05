@@ -3,7 +3,7 @@ const fetchVideoInfo = require("youtube-info");
 const ytdl = require("ytdl-core");
 
 var music = new function() {
-	this.queue = [];
+    this.queue = [];
     this.video_info = [];
     this.isPlaying = false;
     this.isPaused = false;
