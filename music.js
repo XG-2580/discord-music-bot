@@ -140,31 +140,29 @@ var music = new function() {
                     });
 
                     // when finished check for autoplay
-                    this.dispatcher.on('end', (reason) => {
-                        console.log("reason dispatcher ended: " + reason);
-                        this.isPlaying = false;
-                        this.isPaused = false;
-                        this.dispatcher.end();
-                        setTimeout(() => {
-                            if (this.queue.length > 0) {
-                                this.queue.shift();
-                                this.video_info.shift();
+                    if (this.dispatcher) {
+                        this.dispatcher.on('end', (reason) => {
+                            if (this.isPlaying) {
+                                console.log("reason dispatcher ended: " + reason);
+                                this.isPlaying = false;
+                                this.isPaused = false;
+                                setTimeout(() => {
+                                    this.dispatcher = null;
+                                    if (this.queue.length > 0) {
+                                        this.queue.shift();
+                                        this.video_info.shift();
 
-                                if ((this.isAuto || this.isSkipped) && this.queue.length > 0) {
-                                    this.isSkipped = false;
-                                    module.exports.playMusic(message, channel);
-                                }
-                                else {
-                                    if (this.queue.length === 0) {
+                                        if ((this.isAuto || this.isSkipped) && this.queue.length > 0) {
+                                            this.isSkipped = false;
+                                            module.exports.playMusic(message, channel);
+                                        }
+                                    } else {
                                         channel.send('queue is empty');
                                     }
-
-                                }
-                            } else {
-                                channel.send('queue is empty');
-                            }
-                        }, 6000);      
-                    });
+                                }, 6000);
+                            }     
+                        });
+                    }                   
                 }
                 catch (error) {
                     console.log("play error: " + error);
