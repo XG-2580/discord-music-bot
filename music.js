@@ -5,30 +5,49 @@ const ytdl = require("ytdl-core");
 var music = new function() {
     this.queue = [];
     this.video_info = [];
+    this.search_results = [];
+    this.recentlySearched = false;
     this.isPlaying = false;
     this.isPaused = false;
     this.isAuto = false;
+    this.isSkipped = false;
     this.dispatcher = null;
 	this.addSearch = function(query, api_key, channel, capacity) {
         if (this.queue.length < capacity) {
+            query = query.join(" ");
             if (query !== "") {
-                fetch("https://www.googleapis.com/youtube/v3/search?part=id&type=video&q=" + encodeURIComponent(query) + "&key=" + api_key)
-            	.then((response) => {
-            		if (!response.ok) throw response;
-            		return response.json();
-            	})
-            	.then((results) => {
-            		return fetchVideoInfo(results.items[0].id.videoId);
-            	})
-            	.then((videoInfo) => {
-            		this.queue.push("https://www.youtube.com/watch?v=" + videoInfo.videoId);
-                    this.video_info.push(videoInfo);
-                    channel.send("added **" +  videoInfo.title + "**" + " time: " + videoInfo.duration + "s");
-            	})
-            	.catch((error) => {
-            		console.log("add error: " + error);
-            	});
-            }
+                if (this.recentlySearched && !isNaN(query)) {
+                    let number = parseInt(query);
+                    if (number > 0 && number <= this.search_results.length) {
+                        let videoInfo = this.search_results[number-1];
+                        this.queue.push(videoInfo.url);
+                        this.video_info.push(videoInfo);
+                        channel.send(`added **${videoInfo.title}** \n time: ${videoInfo.duration}s`);
+                    }
+                } else {
+                    if (!this.recentlySearched && !isNaN(query)) {
+                        return channel.send("try again");
+                    }
+
+                    fetch("https://www.googleapis.com/youtube/v3/search?part=id&type=video&q=" + 
+                        encodeURIComponent(query) + "&key=" + api_key)
+                	.then((response) => {
+                		if (!response.ok) throw response;
+                		return response.json();
+                	})
+                	.then((results) => {
+                		return fetchVideoInfo(results.items[0].id.videoId);
+                	})
+                	.then((videoInfo) => {
+                		this.queue.push(videoInfo.url);
+                        this.video_info.push(videoInfo);
+                        channel.send(`added **${videoInfo.title}** \n time: ${videoInfo.duration}s`);            	
+                    })
+                	.catch((error) => {
+                		console.log("add error: " + error);
+                	});
+                }
+            }   
         } else {
             channel.send("queue is full"); 
         }
@@ -40,7 +59,7 @@ var music = new function() {
                 .then((videoInfo) => {
                     this.queue.push("https://www.youtube.com/watch?v=" + videoInfo.videoId);
                     this.video_info.push(videoInfo);
-                    channel.send("added **" +  videoInfo.title + "**" + " time: " + videoInfo.duration + "s");
+                    channel.send(`added **${videoInfo.title}** \n time: ${videoInfo.duration}s`);
                 })
                 .catch((error) => {
                     console.log("addlink error: " + error);
@@ -52,13 +71,61 @@ var music = new function() {
             channel.send("queue is full"); 
         } 
     };
+    this.listSearch = function(query, api_key, channel, list_size) {
+        query = query.join(" ");
+        if (query !== "") {
+            this.search_results = [];
+            fetch("https://www.googleapis.com/youtube/v3/search?part=id&type=video&q=" + encodeURIComponent(query) + "&key=" + api_key)
+            .then((response) => {
+                if (!response.ok) throw response;
+                return response.json();
+            })
+            .then((results) => {
+                const fetchLoop = async (n) => {
+                    for (let i = 0; i < n; i++) {
+                      let info = await fetchVideoInfo(results.items[i].id.videoId);
+                      this.search_results.push(info);
+                    }
+                    return;
+                }
+
+                fetchLoop(list_size).then(() => {
+                    this.recentlySearched = true;
+                    let result_string = "";
+                    for (let i = 0; i < list_size; i++) {
+                        result_string += `${i+1}. **${this.search_results[i].title}** \n`;
+                    }
+                    
+                    channel.send({embed: {
+                            color: 0xD62D0C,
+                            title: "search results for: " + query,
+                            url: "https://www.youtube.com/results?search_query=" + encodeURIComponent(query),
+                            description: result_string,
+                            timestamp: new Date(),
+                        }
+                    });
+                })
+                .catch((error) => {
+                    console.log("fetchLoop error: " + error);
+                });
+            })
+            .catch((error) => {
+                console.log("listSearch error: " + error);
+            });
+        }
+    };
+    this.clearSearch = function(channel) {
+        this.search_results = [];
+        this.recentlySearched = false;
+        channel.send("search results cleared");
+    };
     this.playMusic = function(message, channel) {
 
         if (this.queue.length > 0 && !this.isPaused && !this.isPlaying) {
             message.member.voiceChannel.join()
             .then(connection => {
                 try {
-                    channel.send("now playing: **" + this.video_info[0].title + "**");
+                    channel.send(`now playing: **${this.video_info[0].title}**`);
 
                     this.dispatcher = connection.playStream(ytdl(this.queue[0], { 
                         filter: 'audioonly' })
@@ -78,24 +145,25 @@ var music = new function() {
                         this.isPlaying = false;
                         this.isPaused = false;
                         this.dispatcher.end();
-                        this.dispatcher = null;
                         setTimeout(() => {
                             if (this.queue.length > 0) {
                                 this.queue.shift();
                                 this.video_info.shift();
 
-                                if (this.isAuto && this.queue.length > 0) {
+                                if ((this.isAuto || this.isSkipped) && this.queue.length > 0) {
+                                    this.isSkipped = false;
                                     module.exports.playMusic(message, channel);
                                 }
                                 else {
-                                    if (this.queue.length > 0) {
+                                    if (this.queue.length === 0) {
                                         channel.send('queue is empty');
                                     }
+
                                 }
                             } else {
                                 channel.send('queue is empty');
                             }
-                        }, 5000);      
+                        }, 6000);      
                     });
                 }
                 catch (error) {
@@ -115,29 +183,36 @@ var music = new function() {
     };
     this.removeMusic = function(position, channel) {
         if (position === null || isNaN(position)) {
-            channel.send("enter a number between 1 - " + this.queue.length);
+            channel.send(`enter a number between 1 - ${this.queue.length}`);
         } else {
             let temp = Number(position)
             if (temp <= this.queue.length && temp >= 1) {
-                channel.send("removed " + this.video_info[temp - 1].title + " from queue");
+                channel.send(`removed **${this.video_info[temp - 1].title}** from queue`);
                 this.queue.splice(temp - 1, 1);
                 this.video_info.splice(temp - 1, 1); 
             } else {
-               channel.send("enter a number between 1 - " + this.queue.length); 
+               channel.send(`enter a number between 1 - ${this.queue.length}`);
             }
         }
     };
     this.printQueue = function(capacity, channel) {
     	let on_off = this.isAuto ? "ON" : "OFF";
-        channel.send("CURRENT SIZE: " + this.queue.length + " CAPACITY: " + capacity + " AUTOPLAY: " + on_off + '\n');
-        
+        let info_print = `CURRENT SIZE: ${this.queue.length} CAPACITY: ${capacity} AUTOPLAY: ${on_off} \n`;
+        let queue_results = "";
         for (let i = 0; i < this.queue.length; ++i) {
             if (i === 0 && this.isPlaying) {
-                channel.send("(" + (i + 1) + ") " + "**" + this.video_info[i].title + "** <- CURRENTLY PLAYING");
+                queue_results += `(${i+1}) **${this.video_info[i].title}** <- CURRENTLY PLAYING`;
             } else {
-                channel.send("(" + (i + 1) + ") " + "**" + this.video_info[i].title + "**");
+                queue_results += `(${i+1}) **${this.video_info[i].title}**`;
             }
         }
+        channel.send({embed: {
+                color: 0xD62D0C,
+                title: info_print,
+                description: queue_results,
+                timestamp: new Date(),
+            }
+        });
     };
     this.clearQueue = function(channel) {
         this.queue = [];
@@ -163,6 +238,7 @@ var music = new function() {
                 this.dispatcher.resume();
                 this.isPaused = false;
             }
+            this.isSkipped = true;
             this.dispatcher.end();
         }
         else { 
