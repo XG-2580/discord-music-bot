@@ -1,18 +1,20 @@
 const csv = require("csv");
 const fs = require("fs");
 
-var data = new function() {
-	this.random_facts = [];
-	this.Lukas_Tweets = [];
-	this.Connor_Tweets = [];
-	this.config = JSON.parse(fs.readFileSync("./auth.json", "utf-8"));
+module.exports = {
+	random_facts: [],
+	Lukas_Tweets: [],
+	Connor_Tweets: [],
+	config: JSON.parse(fs.readFileSync("./auth.json", "utf-8")),
 	// read in all the data for tweets and random facts
-	this.read_data = function() {
+	read_data: function() {
+
 		function wait(ms) {
 		    return new Promise(resolve => { 
 		        setTimeout(resolve, ms); 
 		    }); 
 		};
+
 	    wait(0)
 	    .then(() => {
 	        let obj = csv();
@@ -39,15 +41,15 @@ var data = new function() {
 	    .catch((error) => {
 	    	console.log("reading in data error: " + error);
 	    })
-	};
+	},
 	// function used for reading in CSV file
-	this.myCSV = function(id, time, message) {
+	myCSV: function(id, time, message) {
 	    this.fieldOne = id;
 	    this.fieldTwo = time;
 	    this.fieldThree = message;
-	};
+	},
 	// returns random entry in any data array
-	this.getRandom = function(name) {
+	getRandom: function(name) {
 		if (name === "lukas") {
 			let temp = Math.floor((Math.random() * this.Lukas_Tweets.length));
 	        let link = "https://twitter.com/LukasPrin/status/" + this.Lukas_Tweets[temp].fieldOne.substring(1);
@@ -62,7 +64,5 @@ var data = new function() {
 	    	let temp = Math.floor((Math.random() * this.random_facts.length));
             return this.random_facts[temp];
 	    }
-	};
+	}
 };
-
-module.exports = data;

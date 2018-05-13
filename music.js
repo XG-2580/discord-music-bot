@@ -2,17 +2,17 @@ const fetch = require("node-fetch");
 const fetchVideoInfo = require("youtube-info");
 const ytdl = require("ytdl-core");
 
-var music = new function() {
-    this.queue = [];
-    this.video_info = [];
-    this.search_results = [];
-    this.recentlySearched = false;
-    this.isPlaying = false;
-    this.isPaused = false;
-    this.isAuto = false;
-    this.isSkipped = false;
-    this.dispatcher = null;
-	this.addSearch = function(query, api_key, channel, capacity) {
+module.exports = {
+    queue: [],
+    video_info: [],
+    search_results: [],
+    recentlySearched: false,
+    isPlaying: false,
+    isPaused: false,
+    isAuto: false,
+    isSkipped: false,
+    dispatcher: null,
+	addSearch: function(query, api_key, channel, capacity) {
         if (this.queue.length < capacity) {
             query = query.join(" ");
             if (query !== "") {
@@ -51,8 +51,8 @@ var music = new function() {
         } else {
             channel.send("queue is full"); 
         }
-    };
-    this.addLink = function(link, channel, capacity) {
+    },
+    addLink: function(link, channel, capacity) {
         if (this.queue.length < capacity) {
             if (ytdl.validateURL(link)) {
                 fetchVideoInfo(ytdl.getURLVideoID(link))
@@ -70,8 +70,8 @@ var music = new function() {
         } else { 
             channel.send("queue is full"); 
         } 
-    };
-    this.listSearch = function(query, api_key, channel, list_size) {
+    },
+    listSearch: function(query, api_key, channel, list_size) {
         query = query.join(" ");
         if (query !== "") {
             this.search_results = [];
@@ -113,13 +113,13 @@ var music = new function() {
                 console.log("listSearch error: " + error);
             });
         }
-    };
-    this.clearSearch = function(channel) {
+    },
+    clearSearch: function(channel) {
         this.search_results = [];
         this.recentlySearched = false;
         channel.send("search results cleared");
-    };
-    this.playMusic = function(message, channel) {
+    },
+    playMusic: function(message, channel) {
 
         if (this.queue.length > 0 && !this.isPaused && !this.isPlaying) {
             message.member.voiceChannel.join()
@@ -178,8 +178,8 @@ var music = new function() {
                 channel.send("already playing"); 
             }
         }
-    };
-    this.removeMusic = function(position, channel) {
+    },
+    removeMusic: function(position, channel) {
         if (position === null || isNaN(position)) {
             channel.send(`enter a number between 1 - ${this.queue.length}`);
         } else {
@@ -192,8 +192,8 @@ var music = new function() {
                channel.send(`enter a number between 1 - ${this.queue.length}`);
             }
         }
-    };
-    this.printQueue = function(capacity, channel) {
+    },
+    printQueue: function(capacity, channel) {
     	let on_off = this.isAuto ? "ON" : "OFF";
         let info_print = `CURRENT SIZE: ${this.queue.length} CAPACITY: ${capacity} AUTOPLAY: ${on_off} \n`;
         let queue_results = "";
@@ -211,13 +211,13 @@ var music = new function() {
                 timestamp: new Date(),
             }
         });
-    };
-    this.clearQueue = function(channel) {
+    },
+    clearQueue: function(channel) {
         this.queue = [];
         this.video_info = [];
         channel.send("queue cleared");
-    };
-    this.setAutoplay = function(message, channel) {
+    },
+    setAutoplay: function(message, channel) {
         if (this.isAuto) { 
             this.isAuto = false;
             channel.send("autoplay off");
@@ -229,8 +229,8 @@ var music = new function() {
                 this.playMusic(message, channel);
             }
         }
-    };
-    this.skipMusic = function(channel) {
+    },
+    skipMusic: function(channel) {
         if (this.queue.length > 0 && (this.isPlaying || this.isPaused)) {
             if (this.isPaused) { 
                 this.dispatcher.resume();
@@ -246,24 +246,24 @@ var music = new function() {
                 channel.send("nothing is playing");
             }
         }
-    };
-    this.pauseMusic = function(channel) {
+    },
+    pauseMusic: function(channel) {
         if (!this.dispatcher.paused) { 
             this.dispatcher.pause();
             this.isPaused = true;
             this.isPlaying = false;
             channel.send("audio paused");
         }
-    };
-    this.resumeMusic = function(channel) {
+    },
+    resumeMusic: function(channel) {
         if (this.dispatcher.paused) { 
             this.dispatcher.resume();
             this.isPaused = false;
             this.isPlaying = true;
             channel.send("audio resumed");
         }
-    };
-    this.stopMusic = function(channel) {
+    },
+    stopMusic: function(channel) {
         if (this.isPlaying) { 
             if (this.dispatcher.paused) { 
                 this.dispatcher.resume();
@@ -273,7 +273,5 @@ var music = new function() {
             this.dispatcher.end(); 
             channel.send("audio stopped");
         }
-    };
+    }
 };
-
-module.exports = music;
