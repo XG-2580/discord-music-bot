@@ -28,6 +28,10 @@ Adds a direct link to the Youtube video to the queue.
 ```
 !addlink [full youtube link]
 ```
+Searches YouTube for the top 5 search results for the given query. Use !add [number in result] to add result to the queue.
+```
+!search [query]
+```
 Forces bot to join current channel (if it is not already in it) then plays the next audio in the queue.
 
 !autoplay will toggle autoplay, play the next audio, and continue until the queue is empty.
