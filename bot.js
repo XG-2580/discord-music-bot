@@ -23,8 +23,10 @@ client.on("ready", () => {
     console.log(client.user.username + " connected \n" + "client id: " + client.user.id);
     let server = client.guilds.get(client.guilds.firstKey());
     console.log("server name: " + server.name + "\n" + "server id: " + server.id);
-    text_channel = getChannel("395259672980094986"); // server.id returns main text channel
+    text_channel = getChannel("351919688026161155");
+    //text_channel = getChannel("395259672980094986"); // server.id returns main text channel
     bot_member = server.members.get(client.user.id);
+
 });
 
 client.on("message", (message) => {

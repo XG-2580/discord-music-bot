@@ -1,6 +1,7 @@
 const fetch = require("node-fetch");
 const fetchVideoInfo = require("youtube-info");
 const ytdl = require("ytdl-core");
+const fs = require("fs");
 
 module.exports = {
     queue: [],
@@ -126,6 +127,13 @@ module.exports = {
             .then(connection => {
                 try {
                     channel.send(`now playing: **${this.video_info[0].title}**`);
+
+                    //if (!fs.existsSync("music/")) {
+                     //   fs.mkdirSync("music/");
+                    //}
+
+                    //ytdl(this.queue[0], { filter: (format) => format.container === 'mp4' })
+                    //  .pipe(fs.createWriteStream('test.mp4'));
 
                     this.dispatcher = connection.playStream(ytdl(this.queue[0], { 
                         filter: 'audioonly' })
