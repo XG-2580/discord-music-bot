@@ -128,49 +128,14 @@ module.exports = {
                 try {
                     channel.send(`now playing: **${this.video_info[0].title}**`);
 
-                    //if (!fs.existsSync("music/")) {
-                     //   fs.mkdirSync("music/");
-                    //}
-
-                    //ytdl(this.queue[0], { filter: (format) => format.container === 'mp4' })
-                    //  .pipe(fs.createWriteStream('test.mp4'));
-
-                    this.dispatcher = connection.playStream(ytdl(this.queue[0], { 
-                        filter: 'audioonly' })
-                    );
-
-                    this.dispatcher.passes = 2;
-                    this.dispatcher.setVolume(0.25);
-                    this.isPlaying = true;
-
-                    this.dispatcher.on('debug', (info) => {
-                        console.log("dispatcher debug: " + info);
-                    });
-
-                    // when finished check for autoplay
-                    if (this.dispatcher) {
-                        this.dispatcher.on('end', (reason) => {
-                            if (this.isPlaying) {
-                                console.log("reason dispatcher ended: " + reason);
-                                this.isPlaying = false;
-                                this.isPaused = false;
-                                setTimeout(() => {
-                                    this.dispatcher = null;
-                                    if (this.queue.length > 0) {
-                                        this.queue.shift();
-                                        this.video_info.shift();
-
-                                        if ((this.isAuto || this.isSkipped) && this.queue.length > 0) {
-                                            this.isSkipped = false;
-                                            module.exports.playMusic(message, channel);
-                                        }
-                                    } else {
-                                        channel.send('queue is empty');
-                                    }
-                                }, 6000);
-                            }     
-                        });
-                    }                   
+                    if (!fs.existsSync("music/")) {
+                        fs.mkdirSync("music/");
+                    }
+                    
+                    executePlay();
+                    //this.dispatcher = connection.playStream(ytdl(this.queue[0], { 
+                    //    filter: 'audioonly' })
+                    //);
                 }
                 catch (error) {
                     console.log("play error: " + error);
@@ -200,6 +165,46 @@ module.exports = {
                channel.send(`enter a number between 1 - ${this.queue.length}`);
             }
         }
+    },
+    executePlay: async function executePlay(message, channel) {
+        const val_1 = await ytdl(this.queue[0], { filter: (format) => format.container === 'mp4' });
+        const val_2 = await val_1.pipe(fs.createWriteStream('music/test.mp4'));
+        this.dispatcher = connection.playFile('music/test.mp4');
+        handleDispatcher(message, channel);
+    },
+    handleDispatcher: function(message, channel) {
+        this.dispatcher.passes = 2;
+        this.dispatcher.setVolume(0.25);
+        this.isPlaying = true;
+
+        this.dispatcher.on('debug', (info) => {
+            console.log("dispatcher debug: " + info);
+        });
+
+        // when finished check for autoplay
+        if (this.dispatcher) {
+            this.dispatcher.on('end', (reason) => {
+                if (this.isPlaying) {
+                    console.log("reason dispatcher ended: " + reason);
+                    this.isPlaying = false;
+                    this.isPaused = false;
+                    setTimeout(() => {
+                        this.dispatcher = null;
+                        if (this.queue.length > 0) {
+                            this.queue.shift();
+                            this.video_info.shift();
+
+                            if ((this.isAuto || this.isSkipped) && this.queue.length > 0) {
+                                this.isSkipped = false;
+                                module.exports.playMusic(message, channel);
+                            }
+                        } else {
+                            channel.send('queue is empty');
+                        }
+                    }, 6000);
+                }     
+            });
+        }  
     },
     printQueue: function(capacity, channel) {
     	let on_off = this.isAuto ? "ON" : "OFF";
